@@ -89,16 +89,7 @@ __macro_do ()
     if [[ "$1" == \: ]]; then
         printf '%s\n' "$macro_string";
     else
-        typeset +i ${1}="$macro_string";
-        __macro_upvar "$1" "${!1}";
+        eval "${1}=\${macro_string}";
     fi
 }
 
-__macro_upvar ()
-if unset -v "$1"; then
-    if (($# == 2)); then
-        eval "${1}=\${2}";
-    else
-        eval "${1}"'=("${@:2}")';
-    fi;
-fi
