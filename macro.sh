@@ -28,68 +28,72 @@
 
 # -- FUNCTIONS.
 
-__macro_create ()
+Macro::Create ()
 {
-    (($# == 0)) && return 1;
+        (( $# )) || builtin return 1
 
-    unset -v \
-        macro_a \
-        macro_pattern \
-        macro_b \
-        macro_char \
-        macro_tmp;
+        builtin typeset \
+                macro_a \
+                macro_pattern="${MACRO_PATTERN:-//}" \
+                macro_b="${2:+/${2}}" \
+                macro_char \
+                macro_tmp="$1";
 
-    typeset \
-        macro_a \
-        macro_pattern="${MACRO_PATTERN:-//}" \
-        macro_b="${2:+/${2}}" \
-        macro_char \
-        macro_tmp="$1";
-
-    if [[ "$macro_pattern" == *[%\#] ]]; then
-        macro_a="/${macro_tmp}";
-        unset -v "macro_b"
-    else
-        if [[ "$macro_tmp" == *[%\#]* ]]; then
-            while [[ -n "$macro_tmp" ]]; do
-                read -r -n 1 macro_char <<< "$macro_tmp";
-                macro_a="${macro_a}[${macro_char}]";
-                macro_tmp="${macro_tmp#?}";
-            done;
+        if
+                [[ $macro_pattern == *[%\#] ]]
+        then
+                macro_a=/${macro_tmp}
+                builtin unset -v macro_b
         else
-            macro_a="$macro_tmp";
-        fi;
-    fi;
+                if
+                        [[ $macro_tmp == *[%\#]* ]]
+                then
+                        while
+                                [[ -n $macro_tmp ]]
+                        do
+                                builtin read -r -n 1 macro_char <<< "$macro_tmp"
+                                macro_a=${macro_a}[${macro_char}]
+                                macro_tmp=${macro_tmp#?}
+                        done
+                else
+                        macro_a=$macro_tmp
+                fi
+        fi
 
-    printf '%s\n' "${macro_pattern}${macro_a}${macro_b}"
+        builtin printf '%s\n' "${macro_pattern}${macro_a}${macro_b}"
 }
 
-__macro_do ()
+Macro::Do ()
 {
-    unset -v \
-        macro_file \
-        macro_string;
+        builtin typeset \
+                macro_file="$MACRO_FILE" \
+                macro_string="$2";
 
-    typeset \
-        macro_file="$MACRO_FILE" \
-        macro_string="$2";
+        if
+                [[ -f /dev/stdin || -p /dev/stdin ]]
+        then
+                macro_file=/dev/fd/0
+        else
+                [[ -f ${macro_file:-|} || -p ${macro_file:-|} ]] || builtin return 1
+        fi
 
-    if [[ -f "/dev/stdin" || -p "/dev/stdin" ]]; then
-        macro_file="/dev/fd/0";
-    else
-        [[ -f "${macro_file:-|}" || -p "${macro_file:-|}" ]] || return 1;
-    fi;
+        while
+                builtin read -r
+        do
+                builtin eval macro_string="\${macro_string${REPLY}}"
+        done < "$macro_file"
 
-    while read -r; do
-        eval macro_string="\${macro_string${REPLY}}";
-    done < "$macro_file";
+        macro_string="'${macro_string}'"
 
-    macro_string="'${macro_string}'";
-
-    if [[ "$1" == \: ]]; then
-        printf '%s\n' "$macro_string";
-    else
-        eval "${1}=\${macro_string}";
-    fi
+        if
+                [[ $1 == \: ]]
+        then
+                builtin printf '%s\n' "$macro_string"
+        else
+                builtin typeset -n macro_ref="$1"
+                macro_ref=$macro_string
+                builtin unset -n macro_ref
+        fi
 }
 
+# vim: set ts=8 sw=8 tw=0 et :

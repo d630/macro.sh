@@ -2,10 +2,10 @@ Some shell subroutines to work with simple macros via pattern substitution.
 
 ```
 Usage
-    __macro_create() <substituendum> [ <substituens> ]
+    Macro::Create <substituendum> [ <substituens> ]
         Print substitution expression to stdout
 
-    __macro_do() <ARG1> <basis>
+    Macro::Do() <ARG1> <basis>
         Do the pattern substitution
 
 Arguments
@@ -21,17 +21,17 @@ Environment variables
     MACRO_PATTERN               Determine the substitution (default is "//"):
                                 "/", "//", "/%" or "/#"
 Examples
-    % __macro_create "Helo" "Hello!"
+    % Macro::Create "Helo" "Hello!"
     > //Helo/Hello!
-    % __macro_create "%s" "Hello!"
+    % Macro::Create "%s" "Hello!"
     > //[%][s]/Hello!
-    % __macro_create "Helo"
+    % Macro::Create "Helo"
     > //Helo
-    % MACRO_PATTERN="/%" __macro_create "Hello! "
+    % MACRO_PATTERN="/%" Macro::Create "Hello! "
     > /%/Hello![:space:]
-    % __macro_create "%s" "Hello!" | __macro_do : "Salut! %s Ciao!"
+    % Macro::Create "%s" "Hello!" | Macro::Do : "Salut! %s Ciao!"
     > 'Salut! Hello! Ciao!'
-    % MACRO_FILE=<(MACRO_PATTERN=/\# __macro_create "Hello! ") \
-      __macro_do : "What?"
+    % MACRO_FILE=<(MACRO_PATTERN=/\# Macro::Create "Hello! ") \
+      Macro::Do : "What?"
     > 'Hello! What?'
 ```
